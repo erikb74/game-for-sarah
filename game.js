@@ -97,6 +97,20 @@ class PlayScene extends Phaser.Scene {
         this.skyGradient.fillGradientStyle(0x87ceeb, 0x87ceeb, 0xe0f6ff, 0xe0f6ff, 1);
         this.skyGradient.fillRect(0, 0, 400, 600);
 
+        // Scrolling clouds for background effect
+        this.clouds = [];
+        for (let i = 0; i < 5; i++) {
+            const cloud = this.add.text(
+                Phaser.Math.Between(0, 400),
+                Phaser.Math.Between(50, 300),
+                '☁️',
+                { fontSize: '40px' }
+            );
+            cloud.setDepth(1);
+            cloud.scrollSpeed = Phaser.Math.Between(0.3, 0.8);
+            this.clouds.push(cloud);
+        }
+
         // Ground
         this.ground = this.add.rectangle(200, 580, 400, 40, 0x8b4513);
         this.physics.add.existing(this.ground, true);
@@ -105,6 +119,7 @@ class PlayScene extends Phaser.Scene {
         this.bird = this.add.text(100, 300, '🐕', {
             fontSize: '40px'
         }).setOrigin(0.5);
+        this.bird.setDepth(20); // Above pipes
         this.physics.add.existing(this.bird);
         this.bird.body.setSize(40, 40);
         this.bird.body.setCollideWorldBounds(true);
@@ -119,6 +134,7 @@ class PlayScene extends Phaser.Scene {
             stroke: '#000000',
             strokeThickness: 4
         }).setOrigin(0.5);
+        this.scoreText.setDepth(100); // Always on top
 
         // Ready text
         this.readyText = this.add.text(200, 250, 'Click or Press SPACE\nto Start!', {
@@ -128,6 +144,7 @@ class PlayScene extends Phaser.Scene {
             strokeThickness: 4,
             align: 'center'
         }).setOrigin(0.5);
+        this.readyText.setDepth(100); // Always on top
 
         // Input handlers
         this.input.on('pointerdown', () => this.flap());
@@ -176,43 +193,71 @@ class PlayScene extends Phaser.Scene {
 
         const gapY = Phaser.Math.Between(150, 400);
         const gapSize = 150;
-        const pipeWidth = 60;
+        const pipeEmoji = '🌳'; // Using tree emoji for pipes
+        const emojiSize = 50;
 
         console.log(`Spawning pipe pair at gapY: ${gapY}`);
 
-        // Top pipe - solid green rectangle
+        // Create top pipe using stacked emojis
         const topPipeHeight = gapY - gapSize/2;
-        const topPipe = this.add.rectangle(450, topPipeHeight/2, pipeWidth, topPipeHeight, 0x22c55e);
-        topPipe.setOrigin(0.5, 0.5);
-        topPipe.setDepth(10);
-        topPipe.setFillStyle(0x22c55e); // Explicitly set fill
-        this.physics.add.existing(topPipe);
-        topPipe.body.setAllowGravity(false);
-        topPipe.body.setImmovable(true);
-        topPipe.body.setSize(pipeWidth, topPipeHeight);
-        topPipe.scored = false;
-        this.pipes.add(topPipe);
+        const topEmojiCount = Math.ceil(topPipeHeight / emojiSize);
 
-        console.log(`Created top pipe at x:450 y:${topPipeHeight/2} width:${pipeWidth} height:${topPipeHeight}`);
+        for (let i = 0; i < topEmojiCount; i++) {
+            const pipeSegment = this.add.text(450, i * emojiSize + 25, pipeEmoji, {
+                fontSize: `${emojiSize}px`
+            }).setOrigin(0.5);
+            pipeSegment.setDepth(10);
+            this.physics.add.existing(pipeSegment);
+            pipeSegment.body.setAllowGravity(false);
+            pipeSegment.body.setImmovable(true);
+            pipeSegment.body.setSize(emojiSize, emojiSize);
 
-        // Bottom pipe - solid green rectangle
-        const bottomPipeHeight = 560 - (gapY + gapSize/2);
-        const bottomPipe = this.add.rectangle(450, gapY + gapSize/2 + bottomPipeHeight/2, pipeWidth, bottomPipeHeight, 0x22c55e);
-        bottomPipe.setOrigin(0.5, 0.5);
-        bottomPipe.setDepth(10);
-        bottomPipe.setFillStyle(0x22c55e); // Explicitly set fill
-        this.physics.add.existing(bottomPipe);
-        bottomPipe.body.setAllowGravity(false);
-        bottomPipe.body.setImmovable(true);
-        bottomPipe.body.setSize(pipeWidth, bottomPipeHeight);
-        this.pipes.add(bottomPipe);
+            // Mark only the first segment for scoring
+            if (i === 0) {
+                pipeSegment.scored = false;
+            } else {
+                pipeSegment.scored = true; // Don't count other segments
+            }
 
-        console.log(`Created bottom pipe at x:450 y:${gapY + gapSize/2 + bottomPipeHeight/2} width:${pipeWidth} height:${bottomPipeHeight}`);
+            this.pipes.add(pipeSegment);
+        }
+
+        console.log(`Created top pipe with ${topEmojiCount} segments at x:450`);
+
+        // Create bottom pipe using stacked emojis
+        const bottomPipeStart = gapY + gapSize/2;
+        const bottomEmojiCount = Math.ceil((560 - bottomPipeStart) / emojiSize);
+
+        for (let i = 0; i < bottomEmojiCount; i++) {
+            const pipeSegment = this.add.text(450, bottomPipeStart + i * emojiSize + 25, pipeEmoji, {
+                fontSize: `${emojiSize}px`
+            }).setOrigin(0.5);
+            pipeSegment.setDepth(10);
+            this.physics.add.existing(pipeSegment);
+            pipeSegment.body.setAllowGravity(false);
+            pipeSegment.body.setImmovable(true);
+            pipeSegment.body.setSize(emojiSize, emojiSize);
+            pipeSegment.scored = true; // Don't count bottom segments
+
+            this.pipes.add(pipeSegment);
+        }
+
+        console.log(`Created bottom pipe with ${bottomEmojiCount} segments`);
         console.log(`Total pipes in group: ${this.pipes.children.size}`);
     }
 
     update() {
         if (this.gameOver) return;
+
+        // Always scroll clouds for background effect
+        this.clouds.forEach(cloud => {
+            cloud.x -= cloud.scrollSpeed;
+            // Wrap around when cloud goes off screen
+            if (cloud.x < -50) {
+                cloud.x = 450;
+                cloud.y = Phaser.Math.Between(50, 300);
+            }
+        });
 
         if (this.gameStarted) {
             // Manually move pipes (since physics velocity isn't working)
@@ -227,7 +272,7 @@ class PlayScene extends Phaser.Scene {
             if (this.game.loop.frame % 60 === 0 && this.pipes.children.size > 0) {
                 console.log(`Active pipes: ${this.pipes.children.size}`);
                 this.pipes.children.entries.forEach((pipe, i) => {
-                    console.log(`  Pipe ${i}: x=${pipe.x}, y=${pipe.y}, visible=${pipe.visible}`);
+                    console.log(`  Pipe ${i}: x=${pipe.x.toFixed(1)}, y=${pipe.y}, visible=${pipe.visible}`);
                 });
             }
 
@@ -379,7 +424,7 @@ const config = {
         default: 'arcade',
         arcade: {
             gravity: { y: 0 },
-            debug: false
+            debug: true // Enable debug mode to see physics bodies
         }
     },
     scene: [BootScene, MainMenuScene, PlayScene, GameOverScene]
