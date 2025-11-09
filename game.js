@@ -184,11 +184,12 @@ class PlayScene extends Phaser.Scene {
         const topPipeHeight = gapY - gapSize/2;
         const topPipe = this.add.rectangle(450, topPipeHeight/2, pipeWidth, topPipeHeight, 0x22c55e);
         topPipe.setOrigin(0.5, 0.5);
-        topPipe.setDepth(10); // Ensure it's above background
+        topPipe.setDepth(10);
+        topPipe.setFillStyle(0x22c55e); // Explicitly set fill
         this.physics.add.existing(topPipe);
         topPipe.body.setAllowGravity(false);
-        topPipe.body.setVelocityX(-150);
         topPipe.body.setImmovable(true);
+        topPipe.body.setSize(pipeWidth, topPipeHeight);
         topPipe.scored = false;
         this.pipes.add(topPipe);
 
@@ -198,11 +199,12 @@ class PlayScene extends Phaser.Scene {
         const bottomPipeHeight = 560 - (gapY + gapSize/2);
         const bottomPipe = this.add.rectangle(450, gapY + gapSize/2 + bottomPipeHeight/2, pipeWidth, bottomPipeHeight, 0x22c55e);
         bottomPipe.setOrigin(0.5, 0.5);
-        bottomPipe.setDepth(10); // Ensure it's above background
+        bottomPipe.setDepth(10);
+        bottomPipe.setFillStyle(0x22c55e); // Explicitly set fill
         this.physics.add.existing(bottomPipe);
         bottomPipe.body.setAllowGravity(false);
-        bottomPipe.body.setVelocityX(-150);
         bottomPipe.body.setImmovable(true);
+        bottomPipe.body.setSize(pipeWidth, bottomPipeHeight);
         this.pipes.add(bottomPipe);
 
         console.log(`Created bottom pipe at x:450 y:${gapY + gapSize/2 + bottomPipeHeight/2} width:${pipeWidth} height:${bottomPipeHeight}`);
@@ -213,6 +215,11 @@ class PlayScene extends Phaser.Scene {
         if (this.gameOver) return;
 
         if (this.gameStarted) {
+            // Manually move pipes (since physics velocity isn't working)
+            this.pipes.children.entries.forEach(pipe => {
+                pipe.x -= 2.5; // Move left at ~150 pixels per second (2.5 * 60fps)
+            });
+
             // Log pipe info every 60 frames (roughly once per second)
             if (this.game.loop.frame % 60 === 0 && this.pipes.children.size > 0) {
                 console.log(`Active pipes: ${this.pipes.children.size}`);
