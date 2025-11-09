@@ -1,21 +1,3 @@
-// Game Configuration
-const config = {
-    type: Phaser.AUTO,
-    width: 400,
-    height: 600,
-    parent: 'game-container',
-    physics: {
-        default: 'arcade',
-        arcade: {
-            gravity: { y: 0 },
-            debug: false
-        }
-    },
-    scene: [BootScene, MainMenuScene, PlayScene, GameOverScene]
-};
-
-const game = new Phaser.Game(config);
-
 // Boot Scene
 class BootScene extends Phaser.Scene {
     constructor() {
@@ -381,3 +363,22 @@ class GameOverScene extends Phaser.Scene {
         this.scene.start('PlayScene');
     }
 }
+
+// Game Configuration
+const config = {
+    type: Phaser.AUTO,
+    width: 400,
+    height: 600,
+    parent: 'game-container',
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 0 },
+            debug: false
+        }
+    },
+    scene: [BootScene, MainMenuScene, PlayScene, GameOverScene]
+};
+
+// Initialize the game
+const game = new Phaser.Game(config);
