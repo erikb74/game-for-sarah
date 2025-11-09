@@ -33,9 +33,10 @@ class MainMenuScene extends Phaser.Scene {
         skyGradient.fillRect(0, 0, 400, 600);
 
         // Title
-        this.add.text(200, 150, '🐕', {
+        const titleDog = this.add.text(200, 150, '🐕', {
             fontSize: '100px'
         }).setOrigin(0.5);
+        titleDog.setScale(-1, 1); // Flip horizontally to face right
 
         this.add.text(200, 250, 'Flappy Bird', {
             fontSize: '48px',
@@ -119,6 +120,7 @@ class PlayScene extends Phaser.Scene {
         this.bird = this.add.text(100, 300, '🐕', {
             fontSize: '40px'
         }).setOrigin(0.5);
+        this.bird.setScale(-1, 1); // Flip horizontally to face right
         this.bird.setDepth(20); // Above pipes
         this.physics.add.existing(this.bird);
         this.bird.body.setSize(40, 40);
