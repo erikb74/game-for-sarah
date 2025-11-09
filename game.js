@@ -218,6 +218,9 @@ class PlayScene extends Phaser.Scene {
             // Manually move pipes (since physics velocity isn't working)
             this.pipes.children.entries.forEach(pipe => {
                 pipe.x -= 2.5; // Move left at ~150 pixels per second (2.5 * 60fps)
+                if (pipe.body) {
+                    pipe.body.updateFromGameObject(); // Sync physics body with sprite position
+                }
             });
 
             // Log pipe info every 60 frames (roughly once per second)
