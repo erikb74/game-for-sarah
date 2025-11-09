@@ -164,9 +164,9 @@ class PlayScene extends Phaser.Scene {
             this.readyText.setVisible(false);
             this.bird.body.setGravity(0, 1000);
 
-            // Start spawning pipes
+            // Start spawning pipes with slower interval for more manageable difficulty
             this.pipeTimer = this.time.addEvent({
-                delay: 1800,
+                delay: 2200,
                 callback: this.spawnPipe,
                 callbackScope: this,
                 loop: true
@@ -191,58 +191,81 @@ class PlayScene extends Phaser.Scene {
     spawnPipe() {
         if (this.gameOver) return;
 
-        const gapY = Phaser.Math.Between(150, 400);
         const gapSize = 150;
         const pipeEmoji = '🌳'; // Using tree emoji for pipes
         const emojiSize = 50;
 
-        console.log(`Spawning pipe pair at gapY: ${gapY}`);
+        // Progressive difficulty based on score
+        let pipeType;
+        if (this.score < 3) {
+            // Score 0-2: Only single pipes (top OR bottom)
+            pipeType = Phaser.Math.Between(0, 1) === 0 ? 'top' : 'bottom';
+        } else if (this.score < 7) {
+            // Score 3-6: Mix of single and double pipes
+            const rand = Phaser.Math.Between(0, 2);
+            pipeType = rand === 0 ? 'top' : (rand === 1 ? 'bottom' : 'both');
+        } else {
+            // Score 7+: Mostly double pipes with occasional single
+            pipeType = Phaser.Math.Between(0, 4) < 3 ? 'both' : (Phaser.Math.Between(0, 1) === 0 ? 'top' : 'bottom');
+        }
 
-        // Create top pipe using stacked emojis
-        const topPipeHeight = gapY - gapSize/2;
-        const topEmojiCount = Math.ceil(topPipeHeight / emojiSize);
+        const gapY = Phaser.Math.Between(150, 400);
+        console.log(`Spawning ${pipeType} pipe(s) at gapY: ${gapY}, score: ${this.score}`);
 
-        for (let i = 0; i < topEmojiCount; i++) {
-            const pipeSegment = this.add.text(450, i * emojiSize + 25, pipeEmoji, {
-                fontSize: `${emojiSize}px`
-            }).setOrigin(0.5);
-            pipeSegment.setDepth(10);
-            this.physics.add.existing(pipeSegment);
-            pipeSegment.body.setAllowGravity(false);
-            pipeSegment.body.setImmovable(true);
-            pipeSegment.body.setSize(emojiSize, emojiSize);
+        // Create top pipe if needed
+        if (pipeType === 'top' || pipeType === 'both') {
+            const topPipeHeight = pipeType === 'both' ? (gapY - gapSize/2) : Phaser.Math.Between(200, 400);
+            const topEmojiCount = Math.ceil(topPipeHeight / emojiSize);
 
-            // Mark only the first segment for scoring
-            if (i === 0) {
-                pipeSegment.scored = false;
-            } else {
-                pipeSegment.scored = true; // Don't count other segments
+            for (let i = 0; i < topEmojiCount; i++) {
+                const pipeSegment = this.add.text(450, i * emojiSize + 25, pipeEmoji, {
+                    fontSize: `${emojiSize}px`
+                }).setOrigin(0.5);
+                pipeSegment.setDepth(10);
+                this.physics.add.existing(pipeSegment);
+                pipeSegment.body.setAllowGravity(false);
+                pipeSegment.body.setImmovable(true);
+                pipeSegment.body.setSize(emojiSize, emojiSize);
+
+                // Mark only the first segment for scoring
+                if (i === 0) {
+                    pipeSegment.scored = false;
+                } else {
+                    pipeSegment.scored = true;
+                }
+
+                this.pipes.add(pipeSegment);
             }
-
-            this.pipes.add(pipeSegment);
+            console.log(`Created top pipe with ${topEmojiCount} segments`);
         }
 
-        console.log(`Created top pipe with ${topEmojiCount} segments at x:450`);
+        // Create bottom pipe if needed
+        if (pipeType === 'bottom' || pipeType === 'both') {
+            const bottomPipeStart = pipeType === 'both' ? (gapY + gapSize/2) : Phaser.Math.Between(100, 300);
+            const bottomEmojiCount = Math.ceil((560 - bottomPipeStart) / emojiSize);
 
-        // Create bottom pipe using stacked emojis
-        const bottomPipeStart = gapY + gapSize/2;
-        const bottomEmojiCount = Math.ceil((560 - bottomPipeStart) / emojiSize);
+            for (let i = 0; i < bottomEmojiCount; i++) {
+                const pipeSegment = this.add.text(450, bottomPipeStart + i * emojiSize + 25, pipeEmoji, {
+                    fontSize: `${emojiSize}px`
+                }).setOrigin(0.5);
+                pipeSegment.setDepth(10);
+                this.physics.add.existing(pipeSegment);
+                pipeSegment.body.setAllowGravity(false);
+                pipeSegment.body.setImmovable(true);
+                pipeSegment.body.setSize(emojiSize, emojiSize);
 
-        for (let i = 0; i < bottomEmojiCount; i++) {
-            const pipeSegment = this.add.text(450, bottomPipeStart + i * emojiSize + 25, pipeEmoji, {
-                fontSize: `${emojiSize}px`
-            }).setOrigin(0.5);
-            pipeSegment.setDepth(10);
-            this.physics.add.existing(pipeSegment);
-            pipeSegment.body.setAllowGravity(false);
-            pipeSegment.body.setImmovable(true);
-            pipeSegment.body.setSize(emojiSize, emojiSize);
-            pipeSegment.scored = true; // Don't count bottom segments
+                // For single bottom pipes or double pipes, handle scoring
+                if (pipeType === 'bottom' && i === 0) {
+                    pipeSegment.scored = false;
+                } else {
+                    pipeSegment.scored = true;
+                }
 
-            this.pipes.add(pipeSegment);
+                this.pipes.add(pipeSegment);
+            }
+            console.log(`Created bottom pipe with ${bottomEmojiCount} segments`);
         }
 
-        console.log(`Created bottom pipe with ${bottomEmojiCount} segments`);
         console.log(`Total pipes in group: ${this.pipes.children.size}`);
     }
 
@@ -260,9 +283,9 @@ class PlayScene extends Phaser.Scene {
         });
 
         if (this.gameStarted) {
-            // Manually move pipes (since physics velocity isn't working)
+            // Manually move pipes at a slower, more manageable speed
             this.pipes.children.entries.forEach(pipe => {
-                pipe.x -= 2.5; // Move left at ~150 pixels per second (2.5 * 60fps)
+                pipe.x -= 1.5; // Move left at ~90 pixels per second (1.5 * 60fps) - slower and more fair
                 if (pipe.body) {
                     pipe.body.updateFromGameObject(); // Sync physics body with sprite position
                 }
@@ -424,7 +447,7 @@ const config = {
         default: 'arcade',
         arcade: {
             gravity: { y: 0 },
-            debug: true // Enable debug mode to see physics bodies
+            debug: false // Disable debug mode for clean visuals
         }
     },
     scene: [BootScene, MainMenuScene, PlayScene, GameOverScene]
