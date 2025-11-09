@@ -3,36 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello World</title>
+    <title>Flappy Bird Game</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
+            min-height: 100vh;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            font-family: Arial, sans-serif;
         }
-        .container {
-            text-align: center;
-        }
-        h1 {
-            font-size: 4rem;
-            margin: 0;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-        p {
-            font-size: 1.5rem;
-            margin-top: 1rem;
+        #game-container {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Hello World!</h1>
-        <p>Welcome to GitHub Pages</p>
-    </div>
+    <div id="game-container"></div>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+    <script src="game.js"></script>
 </body>
 </html>
