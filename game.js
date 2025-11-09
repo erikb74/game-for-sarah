@@ -33,7 +33,7 @@ class MainMenuScene extends Phaser.Scene {
         skyGradient.fillRect(0, 0, 400, 600);
 
         // Title
-        this.add.text(200, 150, '🐦', {
+        this.add.text(200, 150, '🐕', {
             fontSize: '100px'
         }).setOrigin(0.5);
 
@@ -102,7 +102,7 @@ class PlayScene extends Phaser.Scene {
         this.physics.add.existing(this.ground, true);
 
         // Bird - using emoji as text
-        this.bird = this.add.text(100, 300, '🐦', {
+        this.bird = this.add.text(100, 300, '🐕', {
             fontSize: '40px'
         }).setOrigin(0.5);
         this.physics.add.existing(this.bird);
@@ -174,53 +174,40 @@ class PlayScene extends Phaser.Scene {
 
         const gapY = Phaser.Math.Between(150, 400);
         const gapSize = 150;
+        const pipeWidth = 60;
 
-        // Top pipe
-        const topPipe = this.add.text(450, gapY - gapSize/2, '🟩', {
-            fontSize: '60px'
-        }).setOrigin(0.5, 1);
-
+        // Top pipe - solid green rectangle
+        const topPipeHeight = gapY - gapSize/2;
+        const topPipe = this.add.rectangle(450, topPipeHeight/2, pipeWidth, topPipeHeight, 0x22c55e);
         this.physics.add.existing(topPipe);
-        topPipe.body.setSize(60, gapY - gapSize/2);
-        topPipe.body.setOffset(-5, -(gapY - gapSize/2));
         topPipe.body.setAllowGravity(false);
         topPipe.body.setVelocityX(-150);
         topPipe.scored = false;
         this.pipes.add(topPipe);
 
-        // Create visual column for top pipe
-        for (let i = 1; i < Math.floor((gapY - gapSize/2) / 60); i++) {
-            const pipePart = this.add.text(450, gapY - gapSize/2 - (i * 60), '🟩', {
-                fontSize: '60px'
-            }).setOrigin(0.5, 1);
-            this.physics.add.existing(pipePart);
-            pipePart.body.setAllowGravity(false);
-            pipePart.body.setVelocityX(-150);
-            this.pipes.add(pipePart);
-        }
+        // Top pipe border/highlight
+        const topPipeBorder = this.add.rectangle(450, topPipeHeight/2, pipeWidth, topPipeHeight);
+        topPipeBorder.setStrokeStyle(4, 0x16a34a);
+        this.physics.add.existing(topPipeBorder);
+        topPipeBorder.body.setAllowGravity(false);
+        topPipeBorder.body.setVelocityX(-150);
+        this.pipes.add(topPipeBorder);
 
-        // Bottom pipe
-        const bottomPipe = this.add.text(450, gapY + gapSize/2, '🟩', {
-            fontSize: '60px'
-        }).setOrigin(0.5, 0);
-
+        // Bottom pipe - solid green rectangle
+        const bottomPipeHeight = 560 - (gapY + gapSize/2);
+        const bottomPipe = this.add.rectangle(450, gapY + gapSize/2 + bottomPipeHeight/2, pipeWidth, bottomPipeHeight, 0x22c55e);
         this.physics.add.existing(bottomPipe);
-        bottomPipe.body.setSize(60, 600 - (gapY + gapSize/2));
-        bottomPipe.body.setOffset(-5, 0);
         bottomPipe.body.setAllowGravity(false);
         bottomPipe.body.setVelocityX(-150);
         this.pipes.add(bottomPipe);
 
-        // Create visual column for bottom pipe
-        for (let i = 1; i < Math.floor((560 - (gapY + gapSize/2)) / 60); i++) {
-            const pipePart = this.add.text(450, gapY + gapSize/2 + (i * 60), '🟩', {
-                fontSize: '60px'
-            }).setOrigin(0.5, 0);
-            this.physics.add.existing(pipePart);
-            pipePart.body.setAllowGravity(false);
-            pipePart.body.setVelocityX(-150);
-            this.pipes.add(pipePart);
-        }
+        // Bottom pipe border/highlight
+        const bottomPipeBorder = this.add.rectangle(450, gapY + gapSize/2 + bottomPipeHeight/2, pipeWidth, bottomPipeHeight);
+        bottomPipeBorder.setStrokeStyle(4, 0x16a34a);
+        this.physics.add.existing(bottomPipeBorder);
+        bottomPipeBorder.body.setAllowGravity(false);
+        bottomPipeBorder.body.setVelocityX(-150);
+        this.pipes.add(bottomPipeBorder);
     }
 
     update() {
