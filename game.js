@@ -142,6 +142,7 @@ class PlayScene extends Phaser.Scene {
 
         // Start game on first flap
         if (!this.gameStarted) {
+            console.log('Game starting! Initializing pipe spawning...');
             this.gameStarted = true;
             this.readyText.setVisible(false);
             this.bird.body.setGravity(0, 1000);
@@ -154,8 +155,9 @@ class PlayScene extends Phaser.Scene {
                 loop: true
             });
 
-            // Spawn first pipe
-            this.time.delayedCall(1000, () => this.spawnPipe());
+            // Spawn first pipe immediately
+            console.log('Spawning first pipe...');
+            this.spawnPipe();
         }
 
         // Make bird flap
@@ -176,44 +178,49 @@ class PlayScene extends Phaser.Scene {
         const gapSize = 150;
         const pipeWidth = 60;
 
+        console.log(`Spawning pipe pair at gapY: ${gapY}`);
+
         // Top pipe - solid green rectangle
         const topPipeHeight = gapY - gapSize/2;
         const topPipe = this.add.rectangle(450, topPipeHeight/2, pipeWidth, topPipeHeight, 0x22c55e);
+        topPipe.setOrigin(0.5, 0.5);
+        topPipe.setDepth(10); // Ensure it's above background
         this.physics.add.existing(topPipe);
         topPipe.body.setAllowGravity(false);
         topPipe.body.setVelocityX(-150);
+        topPipe.body.setImmovable(true);
         topPipe.scored = false;
         this.pipes.add(topPipe);
 
-        // Top pipe border/highlight
-        const topPipeBorder = this.add.rectangle(450, topPipeHeight/2, pipeWidth, topPipeHeight);
-        topPipeBorder.setStrokeStyle(4, 0x16a34a);
-        this.physics.add.existing(topPipeBorder);
-        topPipeBorder.body.setAllowGravity(false);
-        topPipeBorder.body.setVelocityX(-150);
-        this.pipes.add(topPipeBorder);
+        console.log(`Created top pipe at x:450 y:${topPipeHeight/2} width:${pipeWidth} height:${topPipeHeight}`);
 
         // Bottom pipe - solid green rectangle
         const bottomPipeHeight = 560 - (gapY + gapSize/2);
         const bottomPipe = this.add.rectangle(450, gapY + gapSize/2 + bottomPipeHeight/2, pipeWidth, bottomPipeHeight, 0x22c55e);
+        bottomPipe.setOrigin(0.5, 0.5);
+        bottomPipe.setDepth(10); // Ensure it's above background
         this.physics.add.existing(bottomPipe);
         bottomPipe.body.setAllowGravity(false);
         bottomPipe.body.setVelocityX(-150);
+        bottomPipe.body.setImmovable(true);
         this.pipes.add(bottomPipe);
 
-        // Bottom pipe border/highlight
-        const bottomPipeBorder = this.add.rectangle(450, gapY + gapSize/2 + bottomPipeHeight/2, pipeWidth, bottomPipeHeight);
-        bottomPipeBorder.setStrokeStyle(4, 0x16a34a);
-        this.physics.add.existing(bottomPipeBorder);
-        bottomPipeBorder.body.setAllowGravity(false);
-        bottomPipeBorder.body.setVelocityX(-150);
-        this.pipes.add(bottomPipeBorder);
+        console.log(`Created bottom pipe at x:450 y:${gapY + gapSize/2 + bottomPipeHeight/2} width:${pipeWidth} height:${bottomPipeHeight}`);
+        console.log(`Total pipes in group: ${this.pipes.children.size}`);
     }
 
     update() {
         if (this.gameOver) return;
 
         if (this.gameStarted) {
+            // Log pipe info every 60 frames (roughly once per second)
+            if (this.game.loop.frame % 60 === 0 && this.pipes.children.size > 0) {
+                console.log(`Active pipes: ${this.pipes.children.size}`);
+                this.pipes.children.entries.forEach((pipe, i) => {
+                    console.log(`  Pipe ${i}: x=${pipe.x}, y=${pipe.y}, visible=${pipe.visible}`);
+                });
+            }
+
             // Rotate bird based on velocity
             if (this.bird.body.velocity.y > 0) {
                 this.tweens.add({
@@ -247,6 +254,7 @@ class PlayScene extends Phaser.Scene {
                 }
 
                 if (pipe.x < -50) {
+                    console.log(`Destroying off-screen pipe at x=${pipe.x}`);
                     pipe.destroy();
                 }
             });
