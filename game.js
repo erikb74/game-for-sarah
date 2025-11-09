@@ -197,7 +197,12 @@ class PlayScene extends Phaser.Scene {
 
         // Progressive difficulty based on score
         let pipeType;
-        if (this.score < 3) {
+
+        // ALWAYS make the first pipe come from bottom (easier start after tap-to-start)
+        if (this.score === 0 && this.pipes.children.size === 0) {
+            pipeType = 'bottom';
+            console.log('First pipe: forcing bottom pipe for fair start');
+        } else if (this.score < 3) {
             // Score 0-2: Only single pipes (top OR bottom)
             pipeType = Phaser.Math.Between(0, 1) === 0 ? 'top' : 'bottom';
         } else if (this.score < 7) {
