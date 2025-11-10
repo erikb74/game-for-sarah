@@ -203,49 +203,49 @@ class PlayScene extends Phaser.Scene {
         // ALWAYS make the first pipe come from bottom (easier start after tap-to-start)
         if (this.score === 0 && this.pipes.children.size === 0) {
             pipeType = 'bottom';
-            minPipeHeight = 100;
-            maxPipeHeight = 150;
+            minPipeHeight = 120;
+            maxPipeHeight = 180; // Slightly taller first pipe
             console.log('First pipe: forcing bottom pipe for fair start');
         } else if (this.score < 3) {
-            // Score 0-2: Short single pipes, large gaps
+            // Score 0-2: Short-medium single pipes, good-sized gaps
             pipeType = Phaser.Math.Between(0, 1) === 0 ? 'top' : 'bottom';
-            gapSize = 180; // Generous gap
-            minPipeHeight = 100;
-            maxPipeHeight = 200;
+            gapSize = 170; // Reduced from 180
+            minPipeHeight = 120; // Increased from 100
+            maxPipeHeight = 220; // Increased from 200
         } else if (this.score < 5) {
-            // Score 3-4: Mix of single and double, medium-short pipes
-            const rand = Phaser.Math.Between(0, 3);
-            pipeType = rand === 0 ? 'top' : (rand === 1 ? 'bottom' : 'both');
-            gapSize = 170;
-            minPipeHeight = 120;
-            maxPipeHeight = 250;
+            // Score 3-4: Introduce more doubles earlier, medium pipes
+            const rand = Phaser.Math.Between(0, 2);
+            pipeType = rand === 0 ? 'both' : (rand === 1 ? 'top' : 'bottom'); // 33% double chance (up from 25%)
+            gapSize = 160; // Reduced from 170
+            minPipeHeight = 140; // Increased from 120
+            maxPipeHeight = 260; // Increased from 250
             gapYMin = 180;
             gapYMax = 380;
         } else if (this.score < 8) {
-            // Score 5-7: More doubles, medium pipes
-            const rand = Phaser.Math.Between(0, 4);
-            pipeType = rand < 2 ? 'both' : (rand === 2 ? 'top' : 'bottom');
-            gapSize = 160;
-            minPipeHeight = 150;
-            maxPipeHeight = 300;
+            // Score 5-7: More doubles, taller pipes
+            const rand = Phaser.Math.Between(0, 3);
+            pipeType = rand < 2 ? 'both' : (rand === 2 ? 'top' : 'bottom'); // 50% double chance (up from 40%)
+            gapSize = 155; // Reduced from 160
+            minPipeHeight = 160; // Increased from 150
+            maxPipeHeight = 310; // Increased from 300
             gapYMin = 170;
             gapYMax = 390;
         } else if (this.score < 12) {
-            // Score 8-11: Mostly doubles, taller pipes, smaller gaps
+            // Score 8-11: Mostly doubles, tall pipes, smaller gaps
             const rand = Phaser.Math.Between(0, 5);
             pipeType = rand < 4 ? 'both' : (rand === 4 ? 'top' : 'bottom');
-            gapSize = 150;
+            gapSize = 148; // Reduced from 150
             minPipeHeight = 180;
-            maxPipeHeight = 350;
+            maxPipeHeight = 360; // Increased from 350
             gapYMin = 160;
             gapYMax = 400;
         } else {
             // Score 12+: Maximum difficulty - tallest pipes, smallest gaps
             const rand = Phaser.Math.Between(0, 6);
             pipeType = rand < 5 ? 'both' : (rand === 5 ? 'top' : 'bottom');
-            gapSize = 140;
+            gapSize = 138; // Reduced from 140
             minPipeHeight = 200;
-            maxPipeHeight = 400;
+            maxPipeHeight = 410; // Increased from 400
             gapYMin = 150;
             gapYMax = 410;
         }
