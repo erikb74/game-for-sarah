@@ -38,7 +38,7 @@ class MainMenuScene extends Phaser.Scene {
         }).setOrigin(0.5);
         titleDog.setScale(-1, 1); // Flip horizontally to face right
 
-        this.add.text(200, 250, 'Flappy Bird', {
+        this.add.text(200, 250, "Sarah's Game", {
             fontSize: '48px',
             fill: '#ffffff',
             fontStyle: 'bold',
@@ -165,7 +165,7 @@ class PlayScene extends Phaser.Scene {
             console.log('Game starting! Initializing pipe spawning...');
             this.gameStarted = true;
             this.readyText.setVisible(false);
-            this.bird.body.setGravity(0, 1000);
+            this.bird.body.setGravity(0, 650); // Reduced gravity for smoother, less dramatic falling
 
             // Start spawning pipes with slower interval for more manageable difficulty
             this.pipeTimer = this.time.addEvent({
@@ -181,7 +181,7 @@ class PlayScene extends Phaser.Scene {
         }
 
         // Make bird flap
-        this.bird.body.setVelocityY(-350);
+        this.bird.body.setVelocityY(-280); // Reduced flap strength to match lower gravity
 
         // Rotate bird
         this.tweens.add({
