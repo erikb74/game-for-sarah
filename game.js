@@ -123,7 +123,8 @@ class PlayScene extends Phaser.Scene {
         this.bird.setScale(-1, 1); // Flip horizontally to face right
         this.bird.setDepth(20); // Above pipes
         this.physics.add.existing(this.bird);
-        this.bird.body.setSize(40, 40);
+        this.bird.body.setSize(28, 28); // Tighter hitbox - about 70% of emoji size
+        this.bird.body.setOffset(6, 6); // Center the smaller hitbox within the emoji
         this.bird.body.setCollideWorldBounds(true);
 
         // Pipes group
@@ -232,7 +233,8 @@ class PlayScene extends Phaser.Scene {
                 this.physics.add.existing(pipeSegment);
                 pipeSegment.body.setAllowGravity(false);
                 pipeSegment.body.setImmovable(true);
-                pipeSegment.body.setSize(emojiSize, emojiSize);
+                pipeSegment.body.setSize(35, 35); // Tighter hitbox - about 70% of emoji size
+                pipeSegment.body.setOffset(7.5, 7.5); // Center the smaller hitbox
 
                 // Mark only the first segment for scoring
                 if (i === 0) {
@@ -259,7 +261,8 @@ class PlayScene extends Phaser.Scene {
                 this.physics.add.existing(pipeSegment);
                 pipeSegment.body.setAllowGravity(false);
                 pipeSegment.body.setImmovable(true);
-                pipeSegment.body.setSize(emojiSize, emojiSize);
+                pipeSegment.body.setSize(35, 35); // Tighter hitbox - about 70% of emoji size
+                pipeSegment.body.setOffset(7.5, 7.5); // Center the smaller hitbox
 
                 // For single bottom pipes or double pipes, handle scoring
                 if (pipeType === 'bottom' && i === 0) {
