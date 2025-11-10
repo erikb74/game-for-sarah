@@ -498,6 +498,17 @@ const config = {
     width: 400,
     height: 600,
     parent: 'game-container',
+    scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+        width: 400,
+        height: 600
+    },
+    render: {
+        antialias: false,
+        pixelArt: false,
+        roundPixels: true
+    },
     physics: {
         default: 'arcade',
         arcade: {
