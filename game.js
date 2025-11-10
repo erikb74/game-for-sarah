@@ -194,35 +194,72 @@ class PlayScene extends Phaser.Scene {
     spawnPipe() {
         if (this.gameOver) return;
 
-        const gapSize = 150;
         const pipeEmoji = '🌳'; // Using tree emoji for pipes
         const emojiSize = 50;
 
-        // Progressive difficulty based on score
-        let pipeType;
+        // Progressive difficulty system
+        let pipeType, gapSize, minPipeHeight, maxPipeHeight, gapYMin, gapYMax;
 
         // ALWAYS make the first pipe come from bottom (easier start after tap-to-start)
         if (this.score === 0 && this.pipes.children.size === 0) {
             pipeType = 'bottom';
+            minPipeHeight = 100;
+            maxPipeHeight = 150;
             console.log('First pipe: forcing bottom pipe for fair start');
         } else if (this.score < 3) {
-            // Score 0-2: Only single pipes (top OR bottom)
+            // Score 0-2: Short single pipes, large gaps
             pipeType = Phaser.Math.Between(0, 1) === 0 ? 'top' : 'bottom';
-        } else if (this.score < 7) {
-            // Score 3-6: Mix of single and double pipes
-            const rand = Phaser.Math.Between(0, 2);
+            gapSize = 180; // Generous gap
+            minPipeHeight = 100;
+            maxPipeHeight = 200;
+        } else if (this.score < 5) {
+            // Score 3-4: Mix of single and double, medium-short pipes
+            const rand = Phaser.Math.Between(0, 3);
             pipeType = rand === 0 ? 'top' : (rand === 1 ? 'bottom' : 'both');
+            gapSize = 170;
+            minPipeHeight = 120;
+            maxPipeHeight = 250;
+            gapYMin = 180;
+            gapYMax = 380;
+        } else if (this.score < 8) {
+            // Score 5-7: More doubles, medium pipes
+            const rand = Phaser.Math.Between(0, 4);
+            pipeType = rand < 2 ? 'both' : (rand === 2 ? 'top' : 'bottom');
+            gapSize = 160;
+            minPipeHeight = 150;
+            maxPipeHeight = 300;
+            gapYMin = 170;
+            gapYMax = 390;
+        } else if (this.score < 12) {
+            // Score 8-11: Mostly doubles, taller pipes, smaller gaps
+            const rand = Phaser.Math.Between(0, 5);
+            pipeType = rand < 4 ? 'both' : (rand === 4 ? 'top' : 'bottom');
+            gapSize = 150;
+            minPipeHeight = 180;
+            maxPipeHeight = 350;
+            gapYMin = 160;
+            gapYMax = 400;
         } else {
-            // Score 7+: Mostly double pipes with occasional single
-            pipeType = Phaser.Math.Between(0, 4) < 3 ? 'both' : (Phaser.Math.Between(0, 1) === 0 ? 'top' : 'bottom');
+            // Score 12+: Maximum difficulty - tallest pipes, smallest gaps
+            const rand = Phaser.Math.Between(0, 6);
+            pipeType = rand < 5 ? 'both' : (rand === 5 ? 'top' : 'bottom');
+            gapSize = 140;
+            minPipeHeight = 200;
+            maxPipeHeight = 400;
+            gapYMin = 150;
+            gapYMax = 410;
         }
 
-        const gapY = Phaser.Math.Between(150, 400);
-        console.log(`Spawning ${pipeType} pipe(s) at gapY: ${gapY}, score: ${this.score}`);
+        // For double pipes, vary the gap position (not always centered)
+        const gapY = pipeType === 'both' ? Phaser.Math.Between(gapYMin, gapYMax) : Phaser.Math.Between(150, 400);
+
+        console.log(`Spawning ${pipeType} pipe(s), score: ${this.score}, gap: ${gapSize || 'N/A'}, heights: ${minPipeHeight}-${maxPipeHeight}`);
 
         // Create top pipe if needed
         if (pipeType === 'top' || pipeType === 'both') {
-            const topPipeHeight = pipeType === 'both' ? (gapY - gapSize/2) : Phaser.Math.Between(200, 400);
+            const topPipeHeight = pipeType === 'both'
+                ? (gapY - gapSize/2)
+                : Phaser.Math.Between(minPipeHeight, maxPipeHeight);
             const topEmojiCount = Math.ceil(topPipeHeight / emojiSize);
 
             for (let i = 0; i < topEmojiCount; i++) {
@@ -250,7 +287,15 @@ class PlayScene extends Phaser.Scene {
 
         // Create bottom pipe if needed
         if (pipeType === 'bottom' || pipeType === 'both') {
-            const bottomPipeStart = pipeType === 'both' ? (gapY + gapSize/2) : Phaser.Math.Between(100, 300);
+            let bottomPipeStart;
+            if (pipeType === 'both') {
+                // For double pipes, calculate from gap position
+                bottomPipeStart = gapY + gapSize/2;
+            } else {
+                // For single bottom pipes, vary the starting position based on difficulty
+                const pipeHeight = Phaser.Math.Between(minPipeHeight, maxPipeHeight);
+                bottomPipeStart = 560 - pipeHeight; // Start position to achieve desired height
+            }
             const bottomEmojiCount = Math.ceil((560 - bottomPipeStart) / emojiSize);
 
             for (let i = 0; i < bottomEmojiCount; i++) {
