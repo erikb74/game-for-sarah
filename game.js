@@ -46,8 +46,17 @@ class MainMenuScene extends Phaser.Scene {
             strokeThickness: 4
         }).setOrigin(0.5);
 
+        // High Score display
+        const highScore = this.getHighScore();
+        this.add.text(200, 320, `High Score: ${highScore}`, {
+            fontSize: '24px',
+            fill: '#ffff00',
+            stroke: '#000000',
+            strokeThickness: 3
+        }).setOrigin(0.5);
+
         // Instructions
-        this.add.text(200, 350, 'Click or Press SPACE to Flap', {
+        this.add.text(200, 370, 'Click or Press SPACE to Flap', {
             fontSize: '20px',
             fill: '#ffffff',
             stroke: '#000000',
@@ -78,6 +87,11 @@ class MainMenuScene extends Phaser.Scene {
 
     startGame() {
         this.scene.start('PlayScene');
+    }
+
+    getHighScore() {
+        const saved = localStorage.getItem('sarahsGameHighScore');
+        return saved ? parseInt(saved) : 0;
     }
 }
 
@@ -240,9 +254,22 @@ class PlayScene extends Phaser.Scene {
         this.restartButton.setInteractive({ useHandCursor: true });
         this.restartButton.on('pointerdown', () => this.restartFromPause());
 
+        // Reset High Score button
+        this.resetHighScoreButton = this.add.text(200, 430, 'Reset High Score', {
+            fontSize: '24px',
+            fill: '#ff6666',
+            fontStyle: 'bold',
+            stroke: '#000000',
+            strokeThickness: 3
+        }).setOrigin(0.5);
+        this.resetHighScoreButton.setDepth(201);
+        this.resetHighScoreButton.setVisible(false);
+        this.resetHighScoreButton.setInteractive({ useHandCursor: true });
+        this.resetHighScoreButton.on('pointerdown', () => this.resetHighScore());
+
         // ESC hint
-        this.escHint = this.add.text(200, 450, 'Press ESC to Resume', {
-            fontSize: '20px',
+        this.escHint = this.add.text(200, 500, 'Press ESC to Resume', {
+            fontSize: '18px',
             fill: '#cccccc',
             stroke: '#000000',
             strokeThickness: 3
@@ -262,6 +289,7 @@ class PlayScene extends Phaser.Scene {
         this.pauseTitle.setVisible(true);
         this.resumeButton.setVisible(true);
         this.restartButton.setVisible(true);
+        this.resetHighScoreButton.setVisible(true);
         this.escHint.setVisible(true);
 
         // Start pulsing animation
@@ -281,6 +309,7 @@ class PlayScene extends Phaser.Scene {
         this.pauseTitle.setVisible(false);
         this.resumeButton.setVisible(false);
         this.restartButton.setVisible(false);
+        this.resetHighScoreButton.setVisible(false);
         this.escHint.setVisible(false);
 
         // Stop pulsing animation
@@ -294,6 +323,36 @@ class PlayScene extends Phaser.Scene {
         this.isPaused = false;
         this.physics.resume();
         this.scene.restart();
+    }
+
+    resetHighScore() {
+        if (confirm('Are you sure you want to reset your high score?')) {
+            localStorage.removeItem('sarahsGameHighScore');
+            console.log('High score reset');
+
+            // Visual feedback
+            this.resetHighScoreButton.setText('High Score Reset!');
+            this.resetHighScoreButton.setFill('#00ff00');
+
+            this.time.delayedCall(1500, () => {
+                this.resetHighScoreButton.setText('Reset High Score');
+                this.resetHighScoreButton.setFill('#ff6666');
+            });
+        }
+    }
+
+    getHighScore() {
+        const saved = localStorage.getItem('sarahsGameHighScore');
+        return saved ? parseInt(saved) : 0;
+    }
+
+    saveHighScore(score) {
+        const currentHigh = this.getHighScore();
+        if (score > currentHigh) {
+            localStorage.setItem('sarahsGameHighScore', score.toString());
+            return true; // New high score!
+        }
+        return false;
     }
 
     flap() {
@@ -554,9 +613,16 @@ class PlayScene extends Phaser.Scene {
             pipe.body.setVelocity(0, 0);
         });
 
+        // Save high score
+        const isNewHighScore = this.saveHighScore(this.score);
+
         // Transition to game over scene
         this.time.delayedCall(500, () => {
-            this.scene.start('GameOverScene', { score: this.score });
+            this.scene.start('GameOverScene', {
+                score: this.score,
+                isNewHighScore: isNewHighScore,
+                highScore: this.getHighScore()
+            });
         });
     }
 }
@@ -569,6 +635,8 @@ class GameOverScene extends Phaser.Scene {
 
     init(data) {
         this.finalScore = data.score || 0;
+        this.isNewHighScore = data.isNewHighScore || false;
+        this.highScore = data.highScore || 0;
     }
 
     create() {
@@ -578,7 +646,7 @@ class GameOverScene extends Phaser.Scene {
         skyGradient.fillRect(0, 0, 400, 600);
 
         // Game Over text
-        this.add.text(200, 150, 'Game Over!', {
+        this.add.text(200, 120, 'Game Over!', {
             fontSize: '48px',
             fill: '#ff0000',
             fontStyle: 'bold',
@@ -586,26 +654,57 @@ class GameOverScene extends Phaser.Scene {
             strokeThickness: 6
         }).setOrigin(0.5);
 
-        // Sad emoji
-        this.add.text(200, 230, '😢', {
+        // Emoji based on performance
+        const emoji = this.isNewHighScore ? '🎉' : '😢';
+        this.add.text(200, 200, emoji, {
             fontSize: '64px'
         }).setOrigin(0.5);
 
+        // New High Score message
+        if (this.isNewHighScore) {
+            const newHighText = this.add.text(200, 270, 'NEW HIGH SCORE!', {
+                fontSize: '28px',
+                fill: '#00ff00',
+                fontStyle: 'bold',
+                stroke: '#000000',
+                strokeThickness: 4
+            }).setOrigin(0.5);
+
+            // Pulsing animation for new high score
+            this.tweens.add({
+                targets: newHighText,
+                scale: 1.1,
+                duration: 500,
+                yoyo: true,
+                repeat: -1
+            });
+        }
+
         // Score display
         this.add.text(200, 320, 'Score', {
-            fontSize: '32px',
+            fontSize: '28px',
             fill: '#ffffff',
             stroke: '#000000',
             strokeThickness: 4
         }).setOrigin(0.5);
 
-        this.add.text(200, 370, this.finalScore.toString(), {
-            fontSize: '64px',
+        this.add.text(200, 365, this.finalScore.toString(), {
+            fontSize: '56px',
             fill: '#ffff00',
             fontStyle: 'bold',
             stroke: '#000000',
             strokeThickness: 6
         }).setOrigin(0.5);
+
+        // High Score display
+        if (!this.isNewHighScore && this.highScore > 0) {
+            this.add.text(200, 420, `High Score: ${this.highScore}`, {
+                fontSize: '24px',
+                fill: '#aaaaaa',
+                stroke: '#000000',
+                strokeThickness: 3
+            }).setOrigin(0.5);
+        }
 
         // Restart button
         const restartText = this.add.text(200, 480, 'Click to Restart', {
