@@ -107,6 +107,12 @@ class PlayScene extends Phaser.Scene {
         this.score = 0;
         this.gameStarted = false;
 
+        // Load debug mode setting
+        this.debugMode = localStorage.getItem('sarahsGameDebugMode') === 'true';
+        if (this.debugMode) {
+            this.physics.world.createDebugGraphic();
+        }
+
         // Sky background
         this.skyGradient = this.add.graphics();
         this.skyGradient.fillGradientStyle(0x87ceeb, 0x87ceeb, 0xe0f6ff, 0xe0f6ff, 1);
@@ -255,7 +261,7 @@ class PlayScene extends Phaser.Scene {
         this.restartButton.on('pointerdown', () => this.restartFromPause());
 
         // Reset High Score button
-        this.resetHighScoreButton = this.add.text(200, 430, 'Reset High Score', {
+        this.resetHighScoreButton = this.add.text(200, 410, 'Reset High Score', {
             fontSize: '24px',
             fill: '#ff6666',
             fontStyle: 'bold',
@@ -267,8 +273,21 @@ class PlayScene extends Phaser.Scene {
         this.resetHighScoreButton.setInteractive({ useHandCursor: true });
         this.resetHighScoreButton.on('pointerdown', () => this.resetHighScore());
 
+        // Debug Mode toggle button
+        this.debugToggleButton = this.add.text(200, 460, this.getDebugButtonText(), {
+            fontSize: '24px',
+            fill: '#66ccff',
+            fontStyle: 'bold',
+            stroke: '#000000',
+            strokeThickness: 3
+        }).setOrigin(0.5);
+        this.debugToggleButton.setDepth(201);
+        this.debugToggleButton.setVisible(false);
+        this.debugToggleButton.setInteractive({ useHandCursor: true });
+        this.debugToggleButton.on('pointerdown', () => this.toggleDebugMode());
+
         // ESC hint
-        this.escHint = this.add.text(200, 500, 'Press ESC to Resume', {
+        this.escHint = this.add.text(200, 520, 'Press ESC to Resume', {
             fontSize: '18px',
             fill: '#cccccc',
             stroke: '#000000',
@@ -290,7 +309,11 @@ class PlayScene extends Phaser.Scene {
         this.resumeButton.setVisible(true);
         this.restartButton.setVisible(true);
         this.resetHighScoreButton.setVisible(true);
+        this.debugToggleButton.setVisible(true);
         this.escHint.setVisible(true);
+
+        // Update debug button text in case it changed
+        this.debugToggleButton.setText(this.getDebugButtonText());
 
         // Start pulsing animation
         this.resumeTween.resume();
@@ -310,6 +333,7 @@ class PlayScene extends Phaser.Scene {
         this.resumeButton.setVisible(false);
         this.restartButton.setVisible(false);
         this.resetHighScoreButton.setVisible(false);
+        this.debugToggleButton.setVisible(false);
         this.escHint.setVisible(false);
 
         // Stop pulsing animation
@@ -339,6 +363,38 @@ class PlayScene extends Phaser.Scene {
                 this.resetHighScoreButton.setFill('#ff6666');
             });
         }
+    }
+
+    toggleDebugMode() {
+        this.debugMode = !this.debugMode;
+        localStorage.setItem('sarahsGameDebugMode', this.debugMode.toString());
+
+        // Update physics debug rendering
+        if (this.debugMode) {
+            this.physics.world.drawDebug = true;
+            this.physics.world.debugGraphic = this.add.graphics();
+        } else {
+            this.physics.world.drawDebug = false;
+            if (this.physics.world.debugGraphic) {
+                this.physics.world.debugGraphic.clear();
+            }
+        }
+
+        // Update button text
+        this.debugToggleButton.setText(this.getDebugButtonText());
+
+        // Visual feedback
+        const originalColor = this.debugToggleButton.fillColor;
+        this.debugToggleButton.setFill('#00ff00');
+        this.time.delayedCall(200, () => {
+            this.debugToggleButton.setFill('#66ccff');
+        });
+
+        console.log(`Debug mode ${this.debugMode ? 'enabled' : 'disabled'}`);
+    }
+
+    getDebugButtonText() {
+        return this.debugMode ? 'Debug: ON ✓' : 'Debug: OFF';
     }
 
     getHighScore() {
