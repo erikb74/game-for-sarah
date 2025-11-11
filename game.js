@@ -139,6 +139,15 @@ class PlayScene extends Phaser.Scene {
         }).setOrigin(0.5);
         this.scoreText.setDepth(100); // Always on top
 
+        // Pause button
+        this.pauseButton = this.add.text(370, 20, '⏸️', {
+            fontSize: '32px'
+        }).setOrigin(0.5);
+        this.pauseButton.setDepth(100);
+        this.pauseButton.setVisible(false); // Hidden until game starts
+        this.pauseButton.setInteractive({ useHandCursor: true });
+        this.pauseButton.on('pointerdown', () => this.showPauseMenu());
+
         // Ready text
         this.readyText = this.add.text(200, 250, 'Click or Press SPACE\nto Start!', {
             fontSize: '28px',
@@ -149,12 +158,142 @@ class PlayScene extends Phaser.Scene {
         }).setOrigin(0.5);
         this.readyText.setDepth(100); // Always on top
 
+        // Pause menu (hidden by default)
+        this.isPaused = false;
+        this.createPauseMenu();
+
         // Input handlers
-        this.input.on('pointerdown', () => this.flap());
-        this.input.keyboard.on('keydown-SPACE', () => this.flap());
+        this.input.on('pointerdown', (pointer) => {
+            if (!this.isPaused) {
+                this.flap();
+            }
+        });
+        this.input.keyboard.on('keydown-SPACE', () => {
+            if (!this.isPaused) {
+                this.flap();
+            }
+        });
+        this.input.keyboard.on('keydown-ESC', () => {
+            if (this.gameStarted && !this.gameOver) {
+                if (this.isPaused) {
+                    this.resumeGame();
+                } else {
+                    this.showPauseMenu();
+                }
+            }
+        });
 
         // Pipe spawn timer (will start after first flap)
         this.pipeTimer = null;
+    }
+
+    createPauseMenu() {
+        // Semi-transparent overlay
+        this.pauseOverlay = this.add.rectangle(200, 300, 400, 600, 0x000000, 0.7);
+        this.pauseOverlay.setDepth(200);
+        this.pauseOverlay.setVisible(false);
+
+        // Pause title
+        this.pauseTitle = this.add.text(200, 180, 'PAUSED', {
+            fontSize: '48px',
+            fill: '#ffffff',
+            fontStyle: 'bold',
+            stroke: '#000000',
+            strokeThickness: 6
+        }).setOrigin(0.5);
+        this.pauseTitle.setDepth(201);
+        this.pauseTitle.setVisible(false);
+
+        // Resume button
+        this.resumeButton = this.add.text(200, 280, 'Resume', {
+            fontSize: '36px',
+            fill: '#00ff00',
+            fontStyle: 'bold',
+            stroke: '#000000',
+            strokeThickness: 4
+        }).setOrigin(0.5);
+        this.resumeButton.setDepth(201);
+        this.resumeButton.setVisible(false);
+        this.resumeButton.setInteractive({ useHandCursor: true });
+        this.resumeButton.on('pointerdown', () => this.resumeGame());
+
+        // Pulsing animation for resume button
+        this.resumeTween = this.tweens.add({
+            targets: this.resumeButton,
+            scale: 1.1,
+            duration: 500,
+            yoyo: true,
+            repeat: -1,
+            paused: true
+        });
+
+        // Restart button
+        this.restartButton = this.add.text(200, 360, 'Restart', {
+            fontSize: '36px',
+            fill: '#ffff00',
+            fontStyle: 'bold',
+            stroke: '#000000',
+            strokeThickness: 4
+        }).setOrigin(0.5);
+        this.restartButton.setDepth(201);
+        this.restartButton.setVisible(false);
+        this.restartButton.setInteractive({ useHandCursor: true });
+        this.restartButton.on('pointerdown', () => this.restartFromPause());
+
+        // ESC hint
+        this.escHint = this.add.text(200, 450, 'Press ESC to Resume', {
+            fontSize: '20px',
+            fill: '#cccccc',
+            stroke: '#000000',
+            strokeThickness: 3
+        }).setOrigin(0.5);
+        this.escHint.setDepth(201);
+        this.escHint.setVisible(false);
+    }
+
+    showPauseMenu() {
+        if (!this.gameStarted || this.gameOver || this.isPaused) return;
+
+        this.isPaused = true;
+        this.physics.pause();
+
+        // Show pause menu elements
+        this.pauseOverlay.setVisible(true);
+        this.pauseTitle.setVisible(true);
+        this.resumeButton.setVisible(true);
+        this.restartButton.setVisible(true);
+        this.escHint.setVisible(true);
+
+        // Start pulsing animation
+        this.resumeTween.resume();
+
+        console.log('Game paused');
+    }
+
+    resumeGame() {
+        if (!this.isPaused) return;
+
+        this.isPaused = false;
+        this.physics.resume();
+
+        // Hide pause menu elements
+        this.pauseOverlay.setVisible(false);
+        this.pauseTitle.setVisible(false);
+        this.resumeButton.setVisible(false);
+        this.restartButton.setVisible(false);
+        this.escHint.setVisible(false);
+
+        // Stop pulsing animation
+        this.resumeTween.pause();
+        this.resumeButton.setScale(1);
+
+        console.log('Game resumed');
+    }
+
+    restartFromPause() {
+        this.isPaused = false;
+        this.physics.resume();
+        this.scene.restart();
     }
 
     flap() {
@@ -165,6 +304,7 @@ class PlayScene extends Phaser.Scene {
             console.log('Game starting! Initializing pipe spawning...');
             this.gameStarted = true;
             this.readyText.setVisible(false);
+            this.pauseButton.setVisible(true);
             this.bird.body.setGravity(0, 650); // Reduced gravity for smoother, less dramatic falling
 
             // Start spawning pipes with slower interval for more manageable difficulty
@@ -325,9 +465,9 @@ class PlayScene extends Phaser.Scene {
     }
 
     update() {
-        if (this.gameOver) return;
+        if (this.gameOver || this.isPaused) return;
 
-        // Always scroll clouds for background effect
+        // Always scroll clouds for background effect (unless paused)
         this.clouds.forEach(cloud => {
             cloud.x -= cloud.scrollSpeed;
             // Wrap around when cloud goes off screen
@@ -400,6 +540,9 @@ class PlayScene extends Phaser.Scene {
         this.gameOver = true;
         this.bird.body.setVelocity(0, 0);
         this.bird.body.setGravity(0, 0);
+
+        // Hide pause button
+        this.pauseButton.setVisible(false);
 
         // Stop pipe timer
         if (this.pipeTimer) {
