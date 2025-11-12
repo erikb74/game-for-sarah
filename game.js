@@ -144,7 +144,9 @@ class PlayScene extends Phaser.Scene {
         this.bird.setDepth(20); // Above pipes
         this.physics.add.existing(this.bird);
         this.bird.body.setSize(28, 28); // Tighter hitbox - about 70% of emoji size
-        this.bird.body.setOffset(6, 6); // Center the smaller hitbox within the emoji
+        // Adjust offset for flipped sprite - center the hitbox properly
+        // For a flipped sprite, we need to account for the flip in the offset calculation
+        this.bird.body.setOffset(12, 6); // Adjusted X offset for horizontal flip
         this.bird.body.setCollideWorldBounds(true);
 
         // Pipes group
