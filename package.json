@@ -1,0 +1,12 @@
+{
+  "name": "game-for-sarah",
+  "version": "1.0.0",
+  "description": "Flappy Bird clone using Phaser and emojis",
+  "scripts": {
+    "dev": "python3 -m http.server 8000",
+    "start": "python3 -m http.server 8000"
+  },
+  "keywords": ["game", "phaser", "flappy-bird"],
+  "author": "",
+  "license": "ISC"
+}
