@@ -632,7 +632,7 @@ class PlayScene extends Phaser.Scene {
                 pipeSegment.body.setAllowGravity(false);
                 pipeSegment.body.setImmovable(true);
                 pipeSegment.body.setSize(35, 35); // Tighter hitbox - about 70% of emoji size
-                pipeSegment.body.setOffset(10, 7.5); // Adjusted X offset for tree hitbox
+                pipeSegment.body.setOffset(20, 7.5); // Adjusted X offset for tree hitbox
 
                 // Mark only the first segment for scoring
                 if (i === 0) {
@@ -668,7 +668,7 @@ class PlayScene extends Phaser.Scene {
                 pipeSegment.body.setAllowGravity(false);
                 pipeSegment.body.setImmovable(true);
                 pipeSegment.body.setSize(35, 35); // Tighter hitbox - about 70% of emoji size
-                pipeSegment.body.setOffset(10, 7.5); // Adjusted X offset for tree hitbox
+                pipeSegment.body.setOffset(20, 7.5); // Adjusted X offset for tree hitbox
 
                 // For single bottom pipes or double pipes, handle scoring
                 if (pipeType === 'bottom' && i === 0) {
