@@ -145,7 +145,7 @@ class PlayScene extends Phaser.Scene {
         this.physics.add.existing(this.bird);
         this.bird.body.setSize(28, 28); // Tighter hitbox - about 70% of emoji size
         // Store offset values for debug adjustment
-        this.hitboxOffsetX = -6;
+        this.hitboxOffsetX = 36;
         this.hitboxOffsetY = 6;
         this.bird.body.setOffset(this.hitboxOffsetX, this.hitboxOffsetY);
         this.bird.body.setCollideWorldBounds(true);
