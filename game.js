@@ -526,7 +526,7 @@ class PlayScene extends Phaser.Scene {
             this.gameStarted = true;
             this.readyText.setVisible(false);
             this.pauseButton.setVisible(true);
-            this.bird.body.setGravity(0, 650); // Reduced gravity for smoother, less dramatic falling
+            this.bird.body.setGravity(0, 1200); // Original Flappy Bird gravity for authentic feel
 
             // Start spawning pipes at original Flappy Bird frequency
             this.pipeTimer = this.time.addEvent({
@@ -542,7 +542,7 @@ class PlayScene extends Phaser.Scene {
         }
 
         // Make bird flap
-        this.bird.body.setVelocityY(-280); // Reduced flap strength to match lower gravity
+        this.bird.body.setVelocityY(-350); // Original Flappy Bird flap strength
 
         // Rotate bird
         this.tweens.add({
