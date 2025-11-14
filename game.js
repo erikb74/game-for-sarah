@@ -528,9 +528,9 @@ class PlayScene extends Phaser.Scene {
             this.pauseButton.setVisible(true);
             this.bird.body.setGravity(0, 650); // Reduced gravity for smoother, less dramatic falling
 
-            // Start spawning pipes with slower interval for more manageable difficulty
+            // Start spawning pipes at original Flappy Bird frequency
             this.pipeTimer = this.time.addEvent({
-                delay: 2200,
+                delay: 1500, // Original Flappy Bird timing (~1.5 seconds)
                 callback: this.spawnPipe,
                 callbackScope: this,
                 loop: true
@@ -558,130 +558,71 @@ class PlayScene extends Phaser.Scene {
         const pipeEmoji = '🌳'; // Using tree emoji for pipes
         const emojiSize = 50;
 
-        // Progressive difficulty system
-        let pipeType, gapSize, minPipeHeight, maxPipeHeight, gapYMin, gapYMax;
+        // Consistent gap size like original Flappy Bird
+        // Gap is generous enough to be fair but challenging
+        const gapSize = 160; // Consistent gap throughout the game
 
-        // ALWAYS make the first pipe come from bottom (easier start after tap-to-start)
-        if (this.score === 0 && this.pipes.children.size === 0) {
-            pipeType = 'bottom';
-            minPipeHeight = 120;
-            maxPipeHeight = 180; // Slightly taller first pipe
-            console.log('First pipe: forcing bottom pipe for fair start');
-        } else if (this.score < 3) {
-            // Score 0-2: Short-medium single pipes, good-sized gaps
-            pipeType = Phaser.Math.Between(0, 1) === 0 ? 'top' : 'bottom';
-            gapSize = 170; // Reduced from 180
-            minPipeHeight = 120; // Increased from 100
-            maxPipeHeight = 220; // Increased from 200
-        } else if (this.score < 5) {
-            // Score 3-4: Introduce more doubles earlier, medium pipes
-            const rand = Phaser.Math.Between(0, 2);
-            pipeType = rand === 0 ? 'both' : (rand === 1 ? 'top' : 'bottom'); // 33% double chance (up from 25%)
-            gapSize = 160; // Reduced from 170
-            minPipeHeight = 140; // Increased from 120
-            maxPipeHeight = 260; // Increased from 250
-            gapYMin = 180;
-            gapYMax = 380;
-        } else if (this.score < 8) {
-            // Score 5-7: More doubles, taller pipes
-            const rand = Phaser.Math.Between(0, 3);
-            pipeType = rand < 2 ? 'both' : (rand === 2 ? 'top' : 'bottom'); // 50% double chance (up from 40%)
-            gapSize = 155; // Reduced from 160
-            minPipeHeight = 160; // Increased from 150
-            maxPipeHeight = 310; // Increased from 300
-            gapYMin = 170;
-            gapYMax = 390;
-        } else if (this.score < 12) {
-            // Score 8-11: Mostly doubles, tall pipes, smaller gaps
-            const rand = Phaser.Math.Between(0, 5);
-            pipeType = rand < 4 ? 'both' : (rand === 4 ? 'top' : 'bottom');
-            gapSize = 148; // Reduced from 150
-            minPipeHeight = 180;
-            maxPipeHeight = 360; // Increased from 350
-            gapYMin = 160;
-            gapYMax = 400;
-        } else {
-            // Score 12+: Maximum difficulty - tallest pipes, smallest gaps
-            const rand = Phaser.Math.Between(0, 6);
-            pipeType = rand < 5 ? 'both' : (rand === 5 ? 'top' : 'bottom');
-            gapSize = 138; // Reduced from 140
-            minPipeHeight = 200;
-            maxPipeHeight = 410; // Increased from 400
-            gapYMin = 150;
-            gapYMax = 410;
-        }
+        // Define playable area for gap center (leaving room for bird at top and ground at bottom)
+        const minGapCenter = 120; // Minimum gap center position from top
+        const maxGapCenter = 440; // Maximum gap center position (ground at 560)
 
-        // For double pipes, vary the gap position (not always centered)
-        const gapY = pipeType === 'both' ? Phaser.Math.Between(gapYMin, gapYMax) : Phaser.Math.Between(150, 400);
+        // Randomly position the gap vertically
+        const gapCenterY = Phaser.Math.Between(minGapCenter, maxGapCenter);
 
-        console.log(`Spawning ${pipeType} pipe(s), score: ${this.score}, gap: ${gapSize || 'N/A'}, heights: ${minPipeHeight}-${maxPipeHeight}`);
+        // Calculate top and bottom pipe boundaries
+        const gapTop = gapCenterY - (gapSize / 2);
+        const gapBottom = gapCenterY + (gapSize / 2);
 
-        // Create top pipe if needed
-        if (pipeType === 'top' || pipeType === 'both') {
-            const topPipeHeight = pipeType === 'both'
-                ? (gapY - gapSize/2)
-                : Phaser.Math.Between(minPipeHeight, maxPipeHeight);
-            const topEmojiCount = Math.ceil(topPipeHeight / emojiSize);
+        console.log(`Spawning pipe pair: gap center at Y=${gapCenterY}, gap from ${gapTop} to ${gapBottom}`);
 
-            for (let i = 0; i < topEmojiCount; i++) {
-                const pipeSegment = this.add.text(450, i * emojiSize + 25, pipeEmoji, {
-                    fontSize: `${emojiSize}px`
-                }).setOrigin(0.5);
-                pipeSegment.setDepth(10);
-                this.physics.add.existing(pipeSegment);
-                pipeSegment.body.setAllowGravity(false);
-                pipeSegment.body.setImmovable(true);
-                pipeSegment.body.setSize(35, 35); // Tighter hitbox - about 70% of emoji size
-                pipeSegment.body.setOffset(30, 7.5); // Adjusted X offset for tree hitbox
+        // ALWAYS create top pipe
+        const topPipeHeight = gapTop;
+        const topEmojiCount = Math.ceil(topPipeHeight / emojiSize);
 
-                // Mark only the first segment for scoring
-                if (i === 0) {
-                    pipeSegment.scored = false;
-                } else {
-                    pipeSegment.scored = true;
-                }
+        for (let i = 0; i < topEmojiCount; i++) {
+            const pipeSegment = this.add.text(450, i * emojiSize + 25, pipeEmoji, {
+                fontSize: `${emojiSize}px`
+            }).setOrigin(0.5);
+            pipeSegment.setDepth(10);
+            this.physics.add.existing(pipeSegment);
+            pipeSegment.body.setAllowGravity(false);
+            pipeSegment.body.setImmovable(true);
+            pipeSegment.body.setSize(35, 35); // Tighter hitbox
+            pipeSegment.body.setOffset(30, 7.5); // Adjusted X offset for tree hitbox
 
-                this.pipes.add(pipeSegment);
-            }
-            console.log(`Created top pipe with ${topEmojiCount} segments`);
-        }
-
-        // Create bottom pipe if needed
-        if (pipeType === 'bottom' || pipeType === 'both') {
-            let bottomPipeStart;
-            if (pipeType === 'both') {
-                // For double pipes, calculate from gap position
-                bottomPipeStart = gapY + gapSize/2;
+            // Mark only the first segment of top pipe for scoring
+            if (i === 0) {
+                pipeSegment.scored = false;
+                pipeSegment.isPairMarker = true; // This marks the pipe pair
             } else {
-                // For single bottom pipes, vary the starting position based on difficulty
-                const pipeHeight = Phaser.Math.Between(minPipeHeight, maxPipeHeight);
-                bottomPipeStart = 560 - pipeHeight; // Start position to achieve desired height
+                pipeSegment.scored = true;
             }
-            const bottomEmojiCount = Math.ceil((560 - bottomPipeStart) / emojiSize);
 
-            for (let i = 0; i < bottomEmojiCount; i++) {
-                const pipeSegment = this.add.text(450, bottomPipeStart + i * emojiSize + 25, pipeEmoji, {
-                    fontSize: `${emojiSize}px`
-                }).setOrigin(0.5);
-                pipeSegment.setDepth(10);
-                this.physics.add.existing(pipeSegment);
-                pipeSegment.body.setAllowGravity(false);
-                pipeSegment.body.setImmovable(true);
-                pipeSegment.body.setSize(35, 35); // Tighter hitbox - about 70% of emoji size
-                pipeSegment.body.setOffset(30, 7.5); // Adjusted X offset for tree hitbox
-
-                // For single bottom pipes or double pipes, handle scoring
-                if (pipeType === 'bottom' && i === 0) {
-                    pipeSegment.scored = false;
-                } else {
-                    pipeSegment.scored = true;
-                }
-
-                this.pipes.add(pipeSegment);
-            }
-            console.log(`Created bottom pipe with ${bottomEmojiCount} segments`);
+            this.pipes.add(pipeSegment);
         }
 
+        // ALWAYS create bottom pipe
+        const bottomPipeStart = gapBottom;
+        const bottomEmojiCount = Math.ceil((560 - bottomPipeStart) / emojiSize);
+
+        for (let i = 0; i < bottomEmojiCount; i++) {
+            const pipeSegment = this.add.text(450, bottomPipeStart + i * emojiSize + 25, pipeEmoji, {
+                fontSize: `${emojiSize}px`
+            }).setOrigin(0.5);
+            pipeSegment.setDepth(10);
+            this.physics.add.existing(pipeSegment);
+            pipeSegment.body.setAllowGravity(false);
+            pipeSegment.body.setImmovable(true);
+            pipeSegment.body.setSize(35, 35); // Tighter hitbox
+            pipeSegment.body.setOffset(30, 7.5); // Adjusted X offset for tree hitbox
+
+            // All bottom pipe segments already scored (top pipe handles scoring)
+            pipeSegment.scored = true;
+
+            this.pipes.add(pipeSegment);
+        }
+
+        console.log(`Created pipe pair: ${topEmojiCount} top segments, ${bottomEmojiCount} bottom segments`);
         console.log(`Total pipes in group: ${this.pipes.children.size}`);
     }
 
