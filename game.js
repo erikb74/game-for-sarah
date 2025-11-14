@@ -144,9 +144,10 @@ class PlayScene extends Phaser.Scene {
         this.bird.setDepth(20); // Above pipes
         this.physics.add.existing(this.bird);
         this.bird.body.setSize(28, 28); // Tighter hitbox - about 70% of emoji size
-        // Adjust offset for flipped sprite - center the hitbox properly
-        // For a flipped sprite, we need to account for the flip in the offset calculation
-        this.bird.body.setOffset(12, 6); // Adjusted X offset for horizontal flip
+        // Store offset values for debug adjustment
+        this.hitboxOffsetX = 36;
+        this.hitboxOffsetY = 6;
+        this.bird.body.setOffset(this.hitboxOffsetX, this.hitboxOffsetY);
         this.bird.body.setCollideWorldBounds(true);
 
         // Pipes group
@@ -288,8 +289,64 @@ class PlayScene extends Phaser.Scene {
         this.debugToggleButton.setInteractive({ useHandCursor: true });
         this.debugToggleButton.on('pointerdown', () => this.toggleDebugMode());
 
+        // Hitbox offset adjustment controls (only visible when debug mode is on)
+        this.offsetLabel = this.add.text(200, 510, this.getOffsetText(), {
+            fontSize: '18px',
+            fill: '#ffaa00',
+            stroke: '#000000',
+            strokeThickness: 2
+        }).setOrigin(0.5);
+        this.offsetLabel.setDepth(201);
+        this.offsetLabel.setVisible(false);
+
+        // X offset controls
+        this.xOffsetMinusBtn = this.add.text(100, 540, 'X -1', {
+            fontSize: '16px',
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 2
+        }).setOrigin(0.5);
+        this.xOffsetMinusBtn.setDepth(201);
+        this.xOffsetMinusBtn.setVisible(false);
+        this.xOffsetMinusBtn.setInteractive({ useHandCursor: true });
+        this.xOffsetMinusBtn.on('pointerdown', () => this.adjustOffset(-1, 0));
+
+        this.xOffsetPlusBtn = this.add.text(160, 540, 'X +1', {
+            fontSize: '16px',
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 2
+        }).setOrigin(0.5);
+        this.xOffsetPlusBtn.setDepth(201);
+        this.xOffsetPlusBtn.setVisible(false);
+        this.xOffsetPlusBtn.setInteractive({ useHandCursor: true });
+        this.xOffsetPlusBtn.on('pointerdown', () => this.adjustOffset(1, 0));
+
+        // Y offset controls
+        this.yOffsetMinusBtn = this.add.text(240, 540, 'Y -1', {
+            fontSize: '16px',
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 2
+        }).setOrigin(0.5);
+        this.yOffsetMinusBtn.setDepth(201);
+        this.yOffsetMinusBtn.setVisible(false);
+        this.yOffsetMinusBtn.setInteractive({ useHandCursor: true });
+        this.yOffsetMinusBtn.on('pointerdown', () => this.adjustOffset(0, -1));
+
+        this.yOffsetPlusBtn = this.add.text(300, 540, 'Y +1', {
+            fontSize: '16px',
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 2
+        }).setOrigin(0.5);
+        this.yOffsetPlusBtn.setDepth(201);
+        this.yOffsetPlusBtn.setVisible(false);
+        this.yOffsetPlusBtn.setInteractive({ useHandCursor: true });
+        this.yOffsetPlusBtn.on('pointerdown', () => this.adjustOffset(0, 1));
+
         // ESC hint
-        this.escHint = this.add.text(200, 520, 'Press ESC to Resume', {
+        this.escHint = this.add.text(200, 575, 'Press ESC to Resume', {
             fontSize: '18px',
             fill: '#cccccc',
             stroke: '#000000',
@@ -314,6 +371,16 @@ class PlayScene extends Phaser.Scene {
         this.debugToggleButton.setVisible(true);
         this.escHint.setVisible(true);
 
+        // Show offset controls if debug mode is on
+        if (this.debugMode) {
+            this.offsetLabel.setText(this.getOffsetText());
+            this.offsetLabel.setVisible(true);
+            this.xOffsetMinusBtn.setVisible(true);
+            this.xOffsetPlusBtn.setVisible(true);
+            this.yOffsetMinusBtn.setVisible(true);
+            this.yOffsetPlusBtn.setVisible(true);
+        }
+
         // Update debug button text in case it changed
         this.debugToggleButton.setText(this.getDebugButtonText());
 
@@ -337,6 +404,13 @@ class PlayScene extends Phaser.Scene {
         this.resetHighScoreButton.setVisible(false);
         this.debugToggleButton.setVisible(false);
         this.escHint.setVisible(false);
+
+        // Hide offset controls
+        this.offsetLabel.setVisible(false);
+        this.xOffsetMinusBtn.setVisible(false);
+        this.xOffsetPlusBtn.setVisible(false);
+        this.yOffsetMinusBtn.setVisible(false);
+        this.yOffsetPlusBtn.setVisible(false);
 
         // Stop pulsing animation
         this.resumeTween.pause();
@@ -385,6 +459,24 @@ class PlayScene extends Phaser.Scene {
         // Update button text
         this.debugToggleButton.setText(this.getDebugButtonText());
 
+        // Show/hide offset controls if pause menu is visible
+        if (this.isPaused) {
+            if (this.debugMode) {
+                this.offsetLabel.setText(this.getOffsetText());
+                this.offsetLabel.setVisible(true);
+                this.xOffsetMinusBtn.setVisible(true);
+                this.xOffsetPlusBtn.setVisible(true);
+                this.yOffsetMinusBtn.setVisible(true);
+                this.yOffsetPlusBtn.setVisible(true);
+            } else {
+                this.offsetLabel.setVisible(false);
+                this.xOffsetMinusBtn.setVisible(false);
+                this.xOffsetPlusBtn.setVisible(false);
+                this.yOffsetMinusBtn.setVisible(false);
+                this.yOffsetPlusBtn.setVisible(false);
+            }
+        }
+
         // Visual feedback
         const originalColor = this.debugToggleButton.fillColor;
         this.debugToggleButton.setFill('#00ff00');
@@ -397,6 +489,18 @@ class PlayScene extends Phaser.Scene {
 
     getDebugButtonText() {
         return this.debugMode ? 'Debug: ON ✓' : 'Debug: OFF';
+    }
+
+    getOffsetText() {
+        return `Offset: X=${this.hitboxOffsetX}, Y=${this.hitboxOffsetY}`;
+    }
+
+    adjustOffset(deltaX, deltaY) {
+        this.hitboxOffsetX += deltaX;
+        this.hitboxOffsetY += deltaY;
+        this.bird.body.setOffset(this.hitboxOffsetX, this.hitboxOffsetY);
+        this.offsetLabel.setText(this.getOffsetText());
+        console.log(`Hitbox offset adjusted to: X=${this.hitboxOffsetX}, Y=${this.hitboxOffsetY}`);
     }
 
     getHighScore() {
@@ -528,7 +632,7 @@ class PlayScene extends Phaser.Scene {
                 pipeSegment.body.setAllowGravity(false);
                 pipeSegment.body.setImmovable(true);
                 pipeSegment.body.setSize(35, 35); // Tighter hitbox - about 70% of emoji size
-                pipeSegment.body.setOffset(7.5, 7.5); // Center the smaller hitbox
+                pipeSegment.body.setOffset(30, 7.5); // Adjusted X offset for tree hitbox
 
                 // Mark only the first segment for scoring
                 if (i === 0) {
@@ -564,7 +668,7 @@ class PlayScene extends Phaser.Scene {
                 pipeSegment.body.setAllowGravity(false);
                 pipeSegment.body.setImmovable(true);
                 pipeSegment.body.setSize(35, 35); // Tighter hitbox - about 70% of emoji size
-                pipeSegment.body.setOffset(7.5, 7.5); // Center the smaller hitbox
+                pipeSegment.body.setOffset(30, 7.5); // Adjusted X offset for tree hitbox
 
                 // For single bottom pipes or double pipes, handle scoring
                 if (pipeType === 'bottom' && i === 0) {
