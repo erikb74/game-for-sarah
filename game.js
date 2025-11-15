@@ -144,11 +144,15 @@ class PlayScene extends Phaser.Scene {
         this.bird.setDepth(20); // Above pipes
         this.physics.add.existing(this.bird);
         this.bird.body.setSize(28, 28); // Tighter hitbox - about 70% of emoji size
-        // Store offset values for debug adjustment
+        // Store offset values for debug adjustment (bird)
         this.hitboxOffsetX = 36;
         this.hitboxOffsetY = 6;
         this.bird.body.setOffset(this.hitboxOffsetX, this.hitboxOffsetY);
         this.bird.body.setCollideWorldBounds(true);
+
+        // Store pipe hitbox offset values for debug adjustment
+        this.pipeOffsetX = 30;
+        this.pipeOffsetY = 7.5;
 
         // Pipes group
         this.pipes = this.physics.add.group();
@@ -492,15 +496,22 @@ class PlayScene extends Phaser.Scene {
     }
 
     getOffsetText() {
-        return `Offset: X=${this.hitboxOffsetX}, Y=${this.hitboxOffsetY}`;
+        return `Pipe Offset: X=${this.pipeOffsetX}, Y=${this.pipeOffsetY}`;
     }
 
     adjustOffset(deltaX, deltaY) {
-        this.hitboxOffsetX += deltaX;
-        this.hitboxOffsetY += deltaY;
-        this.bird.body.setOffset(this.hitboxOffsetX, this.hitboxOffsetY);
+        this.pipeOffsetX += deltaX;
+        this.pipeOffsetY += deltaY;
+
+        // Update all existing pipes with new offset
+        this.pipes.children.entries.forEach(pipe => {
+            if (pipe.body) {
+                pipe.body.setOffset(this.pipeOffsetX, this.pipeOffsetY);
+            }
+        });
+
         this.offsetLabel.setText(this.getOffsetText());
-        console.log(`Hitbox offset adjusted to: X=${this.hitboxOffsetX}, Y=${this.hitboxOffsetY}`);
+        console.log(`Pipe hitbox offset adjusted to: X=${this.pipeOffsetX}, Y=${this.pipeOffsetY}`);
     }
 
     getHighScore() {
@@ -588,7 +599,7 @@ class PlayScene extends Phaser.Scene {
             pipeSegment.body.setAllowGravity(false);
             pipeSegment.body.setImmovable(true);
             pipeSegment.body.setSize(35, 35); // Tighter hitbox
-            pipeSegment.body.setOffset(30, 7.5); // Adjusted X offset for tree hitbox
+            pipeSegment.body.setOffset(this.pipeOffsetX, this.pipeOffsetY); // Use stored offset values
 
             // Mark only the first segment of top pipe for scoring
             if (i === 0) {
@@ -614,7 +625,7 @@ class PlayScene extends Phaser.Scene {
             pipeSegment.body.setAllowGravity(false);
             pipeSegment.body.setImmovable(true);
             pipeSegment.body.setSize(35, 35); // Tighter hitbox
-            pipeSegment.body.setOffset(30, 7.5); // Adjusted X offset for tree hitbox
+            pipeSegment.body.setOffset(this.pipeOffsetX, this.pipeOffsetY); // Use stored offset values
 
             // All bottom pipe segments already scored (top pipe handles scoring)
             pipeSegment.scored = true;
