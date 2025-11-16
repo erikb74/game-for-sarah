@@ -151,7 +151,7 @@ class PlayScene extends Phaser.Scene {
         this.bird.body.setCollideWorldBounds(true);
 
         // Store pipe hitbox offset values for debug adjustment
-        this.pipeOffsetX = 30;
+        this.pipeOffsetX = 18;
         this.pipeOffsetY = 7.5;
 
         // Pipes group
